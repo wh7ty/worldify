@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import TagInput from '../ui/TagInput'
 import {
@@ -116,11 +116,19 @@ export default function EntityModal({
   const [draft, setDraft] = useState<EntityDraft>(initialDraft)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const wasOpenRef = useRef(false)
   const initialCategory = initialCategorySlug
     ? libraryItems.find((item) => item.kind === 'category' && item.slug === initialCategorySlug)
     : undefined
 
   useEffect(() => {
+    const justOpened = open && !wasOpenRef.current
+    wasOpenRef.current = open
+
+    if (!open || !justOpened) {
+      return
+    }
+
     if (!entity) {
       setDraft({
         ...initialDraft,

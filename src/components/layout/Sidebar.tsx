@@ -31,6 +31,8 @@ import { supabase } from '../../lib/supabase'
 import { getCategoryIcon } from '../../lib/categoryIcons'
 import { useWorldStore } from '../../store/useWorldStore'
 
+const APP_VERSION = '1.02'
+
 export default function Sidebar({
   isMobile = false,
   isOpen = true,
@@ -178,18 +180,34 @@ export default function Sidebar({
               >
                 <Globe size={15} color="var(--color-primary-text)" strokeWidth={1.5} />
               </div>
-              <span
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 20,
-                  fontWeight: 700,
-                  color: 'var(--color-text)',
-                  letterSpacing: '-0.02em',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Worldify
-              </span>
+              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 20,
+                    fontWeight: 700,
+                    color: 'var(--color-text)',
+                    letterSpacing: '-0.02em',
+                    whiteSpace: 'nowrap',
+                    lineHeight: 1.1,
+                  }}
+                >
+                  Worldify
+                </span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-ui)',
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: 'var(--color-text-secondary)',
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    lineHeight: 1.4,
+                  }}
+                >
+                  v{APP_VERSION}
+                </span>
+              </div>
             </div>
             {/* Mobile: Close button | Desktop: Collapse toggle */}
             {isMobile ? (

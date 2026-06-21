@@ -179,6 +179,18 @@ Alles ist eine **Entity** innerhalb eines **Universe**.
 
 ## Wichtige Entscheidungen & Kontext
 
+## Versions-Regel
+
+- Worldify arbeitet ab jetzt mit einer sichtbaren App-Version.
+- Startversion ist **1.01**.
+- Nach jedem inhaltlichen Update wird die Version um **0.01** erhöht:
+  - `1.01`
+  - `1.02`
+  - `1.03`
+  - usw.
+- Die aktuelle Versionsnummer steht in der UI direkt unter dem **Worldify**-Logo in der Sidebar.
+- Bei künftigen Updates muss die sichtbare Versionsnummer und dieser Verlauf konsistent mitgezogen werden.
+
 - App ist **privat** —
 - Kein World Anvil-Klon — Fokus auf Einfachheit und Qualität statt Feature-Breite
 - Erst Layout & Entity-System polieren, dann erweiterte Features
@@ -1073,3 +1085,17 @@ Build: ✓ 0 TypeScript-Fehler
   - Avatar-Menue bekam ein stabiles `aria-label`
   - Playwright-Smoketest nutzt jetzt den semantischen Selector statt einer Initiale
 - Ziel davon: ehrlich dokumentierter Release-Stand plus robusteres E2E-Sicherheitsnetz
+
+## Update 2026-06-22 - Versionierung eingeführt
+
+- Neue Versionsregel festgelegt und in `mind.md` dokumentiert.
+- Startversion ist **1.01**.
+- Künftige Updates erhöhen die Version jeweils um **0.01**.
+- Die aktuelle Version wird sichtbar direkt unter dem Worldify-Logo in der Sidebar angezeigt.
+
+## Update 2026-06-22 - Version 1.02 - Create-Modal Draft-Reset gefixt
+
+- Problem gefunden: Beim Erstellen neuer Entities konnte sich der eingegebene Name nach einiger Zeit wieder zurücksetzen.
+- Ursache war ein unbeabsichtigtes Re-Initialisieren des Draft-State im `EntityModal`, wenn sich abhängige Daten im Hintergrund aktualisiert haben.
+- Fix: Das Modal initialisiert den Draft jetzt nur noch beim echten Öffnen des Dialogs statt bei späteren Hintergrund-Updates.
+- Sichtbare App-Version auf **1.02** erhöht.
