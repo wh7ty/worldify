@@ -8,3 +8,5 @@ test-results
 temp_entitypage_snapshot.txt
 .agents
 .claude
+
+.vercel
