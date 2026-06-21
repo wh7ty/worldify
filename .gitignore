@@ -1,0 +1,10 @@
+.env
+.env.local
+.env.*.local
+!.env.example
+dist
+node_modules
+test-results
+temp_entitypage_snapshot.txt
+.agents
+.claude
