@@ -3913,6 +3913,8 @@ function CategoryFieldTab({
   const fieldTabWidth = useWindowWidth()
   const isCompactWriter = fieldTabWidth < 768
   const isMobileWriter = fieldTabWidth < 640
+  const editingTextareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const addTextareaRef = useRef<HTMLTextAreaElement | null>(null)
 
   useEffect(() => { setLocalText(fieldValue) }, [fieldValue])
 
@@ -4204,29 +4206,41 @@ function CategoryFieldTab({
                     />
                   </div>
                   <div style={{ padding: isMobileWriter ? 'var(--space-4)' : 'var(--space-6)' }}>
+                    <WriterToolbar
+                      compact={isCompactWriter}
+                      mobile={isMobileWriter}
+                      onAction={(action) => {
+                        if (!editingTextareaRef.current) return
+                        setEditingText(applyWriterAction(editingTextareaRef.current, editingText, action))
+                      }}
+                    />
                     <textarea
+                      ref={editingTextareaRef}
                       value={editingText}
                       onChange={(e) => setEditingText(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Escape') setEditingIndex(null) }}
+                      onKeyDown={(e) => {
+                        if (handleWriterShortcut(e, editingTextareaRef.current, editingText, setEditingText)) return
+                        if (e.key === 'Escape') setEditingIndex(null)
+                      }}
                       placeholder={'Beginne zu schreiben …\n\nDialoge, Szenenbeschreibungen, Lore, Buchkapitel oder Game-Texte finden hier ihren Platz.'}
                       rows={14}
-                      style={{ width: '100%', maxWidth: '65ch', border: 'none', outline: 'none', resize: 'vertical', fontSize: 16, fontFamily: 'var(--font-ui)', color: 'var(--color-text)', lineHeight: 1.8, backgroundColor: 'transparent', minHeight: isMobileWriter ? 320 : 360, boxSizing: 'border-box' }}
+                      style={{ width: '100%', border: 'none', outline: 'none', resize: 'vertical', fontSize: isMobileWriter ? 15 : 16, fontFamily: 'var(--font-ui)', color: 'var(--color-text)', lineHeight: 1.8, backgroundColor: 'transparent', minHeight: isMobileWriter ? 240 : isCompactWriter ? 300 : 360, boxSizing: 'border-box' }}
                     />
                   </div>
                   <div style={{ display: 'flex', flexDirection: isMobileWriter ? 'column' : 'row', alignItems: isMobileWriter ? 'stretch' : 'center', justifyContent: 'space-between', gap: 'var(--space-3)', padding: isMobileWriter ? 'var(--space-4)' : 'var(--space-3) var(--space-6)', borderTop: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
                     <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-ui)' }}>
                       {editingText.trim() ? editingText.trim().split(/\s+/).length : 0} Wörter · {editingText.length} Zeichen
                     </span>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
+                    <div style={{ display: 'flex', flexDirection: isMobileWriter ? 'column' : 'row', justifyContent: 'flex-end', gap: 'var(--space-2)', width: isMobileWriter ? '100%' : 'auto' }}>
                     <button
                       onClick={() => setEditingIndex(null)}
-                      style={{ ...cfBtn, width: 'auto', padding: '0 var(--space-3)', gap: 'var(--space-1)', fontSize: 13 }}
+                      style={{ ...cfBtn, width: isMobileWriter ? '100%' : 'auto', padding: '0 var(--space-3)', gap: 'var(--space-1)', fontSize: 13 }}
                     >
                       <X size={15} strokeWidth={1.5} /> Abbrechen
                     </button>
                     <button
                       onClick={() => { const next = [...sectionItems]; next[i] = { title: editSectionTitle.trim(), body: editingText, label: editSectionLabel.trim() }; onSave?.(serializeSections(next)); setEditingIndex(null) }}
-                      style={{ ...cfBtn, width: 'auto', height: 36, padding: '0 var(--space-4)', gap: 'var(--space-2)', fontSize: 13, color: 'var(--color-primary-text)', backgroundColor: 'var(--color-primary)', borderRadius: 'var(--radius-md)' }}
+                      style={{ ...cfBtn, width: isMobileWriter ? '100%' : 'auto', height: 36, padding: '0 var(--space-4)', gap: 'var(--space-2)', fontSize: 13, color: 'var(--color-primary-text)', backgroundColor: 'var(--color-primary)', borderRadius: 'var(--radius-md)' }}
                     >
                       <Check size={15} strokeWidth={1.5} /> Speichern
                     </button>
@@ -4235,7 +4249,7 @@ function CategoryFieldTab({
                 </>
               ) : (
                 <>
-                  <div style={{ padding: isMobileWriter ? 'var(--space-4)' : 'var(--space-5) var(--space-6) var(--space-4)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 'var(--space-4)', borderBottom: '1px solid var(--color-border)' }}>
+                  <div style={{ padding: isMobileWriter ? 'var(--space-4)' : 'var(--space-5) var(--space-6) var(--space-4)', display: 'flex', flexDirection: isMobileWriter ? 'column' : 'row', alignItems: isMobileWriter ? 'stretch' : 'flex-start', justifyContent: 'space-between', gap: 'var(--space-4)', borderBottom: '1px solid var(--color-border)' }}>
                     <div>
                       <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--color-primary)', fontFamily: 'var(--font-ui)', marginBottom: 'var(--space-2)' }}>
                         {section.label || `Abschnitt ${i + 1}`}
@@ -4244,7 +4258,7 @@ function CategoryFieldTab({
                         {section.title || 'Unbenannter Abschnitt'}
                       </h3>
                     </div>
-                    <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                    <div style={{ display: 'flex', gap: 2, flexShrink: 0, alignSelf: isMobileWriter ? 'flex-end' : 'auto' }}>
                       <button onClick={() => { setEditingIndex(i); setEditSectionTitle(section.title); setEditSectionLabel(section.label || 'Kapitel'); setEditingText(section.body) }} style={cfBtn} title="Im Writer öffnen"><Pencil size={15} strokeWidth={1.5} /></button>
                       <button
                         onClick={async () => {
@@ -4264,7 +4278,9 @@ function CategoryFieldTab({
                   </div>
                   <div style={{ padding: isMobileWriter ? 'var(--space-4)' : 'var(--space-6)' }}>
                     {section.body ? (
-                      <p style={{ margin: 0, maxWidth: '65ch', fontSize: 15, color: 'var(--color-text)', lineHeight: 1.8, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', fontFamily: 'var(--font-ui)' }}>{section.body}</p>
+                      <div style={{ margin: 0, fontSize: 15, color: 'var(--color-text)', lineHeight: 1.8, overflowWrap: 'anywhere', fontFamily: 'var(--font-ui)' }}>
+                        <WriterRichTextPreview text={section.body} compact={isCompactWriter} />
+                      </div>
                     ) : (
                       <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-placeholder)', lineHeight: 1.7, fontStyle: 'italic', fontFamily: 'var(--font-ui)' }}>Noch kein Text — öffne den Abschnitt zum Schreiben.</p>
                     )}
@@ -4300,26 +4316,38 @@ function CategoryFieldTab({
                 />
               </div>
               <div style={{ padding: isMobileWriter ? 'var(--space-4)' : 'var(--space-6)' }}>
+                <WriterToolbar
+                  compact={isCompactWriter}
+                  mobile={isMobileWriter}
+                  onAction={(action) => {
+                    if (!addTextareaRef.current) return
+                    setAddText(applyWriterAction(addTextareaRef.current, addText, action))
+                  }}
+                />
                 <textarea
+                  ref={addTextareaRef}
                   value={addText}
                   onChange={(e) => setAddText(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Escape') { setIsAdding(false); setAddText(''); setAddSectionTitle(''); setAddSectionLabel('Kapitel') } }}
+                  onKeyDown={(e) => {
+                    if (handleWriterShortcut(e, addTextareaRef.current, addText, setAddText)) return
+                    if (e.key === 'Escape') { setIsAdding(false); setAddText(''); setAddSectionTitle(''); setAddSectionLabel('Kapitel') }
+                  }}
                   placeholder={'Beginne zu schreiben …\n\nDialoge, Szenenbeschreibungen, Lore, Buchkapitel oder Game-Texte finden hier ihren Platz.'}
                   rows={14}
-                  style={{ width: '100%', maxWidth: '65ch', border: 'none', outline: 'none', resize: 'vertical', fontSize: 16, fontFamily: 'var(--font-ui)', color: 'var(--color-text)', lineHeight: 1.8, backgroundColor: 'transparent', minHeight: isMobileWriter ? 320 : 360, boxSizing: 'border-box' }}
+                  style={{ width: '100%', border: 'none', outline: 'none', resize: 'vertical', fontSize: isMobileWriter ? 15 : 16, fontFamily: 'var(--font-ui)', color: 'var(--color-text)', lineHeight: 1.8, backgroundColor: 'transparent', minHeight: isMobileWriter ? 240 : isCompactWriter ? 300 : 360, boxSizing: 'border-box' }}
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: isMobileWriter ? 'column' : 'row', alignItems: isMobileWriter ? 'stretch' : 'center', justifyContent: 'space-between', gap: 'var(--space-3)', padding: isMobileWriter ? 'var(--space-4)' : 'var(--space-3) var(--space-6)', borderTop: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
                 <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-ui)' }}>
                   {addText.trim() ? addText.trim().split(/\s+/).length : 0} Wörter · {addText.length} Zeichen
                 </span>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
-                  <button onClick={() => { setIsAdding(false); setAddText(''); setAddSectionTitle(''); setAddSectionLabel('Kapitel') }} style={{ ...cfBtn, width: 'auto', padding: '0 var(--space-3)', gap: 'var(--space-1)', fontSize: 13 }}>
+                <div style={{ display: 'flex', flexDirection: isMobileWriter ? 'column' : 'row', justifyContent: 'flex-end', gap: 'var(--space-2)', width: isMobileWriter ? '100%' : 'auto' }}>
+                  <button onClick={() => { setIsAdding(false); setAddText(''); setAddSectionTitle(''); setAddSectionLabel('Kapitel') }} style={{ ...cfBtn, width: isMobileWriter ? '100%' : 'auto', padding: '0 var(--space-3)', gap: 'var(--space-1)', fontSize: 13 }}>
                     <X size={15} strokeWidth={1.5} /> Abbrechen
                   </button>
                 <button
                   onClick={() => { if (!addText.trim() && !addSectionTitle.trim()) { setIsAdding(false); return }; onSave?.(serializeSections([...sectionItems, { title: addSectionTitle.trim(), body: addText, label: addSectionLabel.trim() }])); setAddText(''); setAddSectionTitle(''); setAddSectionLabel('Kapitel'); setIsAdding(false) }}
-                  style={{ ...cfBtn, width: 'auto', height: 36, padding: '0 var(--space-4)', gap: 'var(--space-2)', fontSize: 13, color: 'var(--color-primary-text)', backgroundColor: 'var(--color-primary)', borderRadius: 'var(--radius-md)' }}
+                  style={{ ...cfBtn, width: isMobileWriter ? '100%' : 'auto', height: 36, padding: '0 var(--space-4)', gap: 'var(--space-2)', fontSize: 13, color: 'var(--color-primary-text)', backgroundColor: 'var(--color-primary)', borderRadius: 'var(--radius-md)' }}
                 >
                   <Check size={15} strokeWidth={1.5} /> Abschnitt anlegen
                 </button>
@@ -4729,6 +4757,314 @@ function StructuredPreviewItem({
 
 function toSingular(label: string) {
   return label.endsWith('s') ? label.slice(0, -1) : label
+}
+
+type WriterAction = 'bold' | 'italic' | 'strike' | 'h1' | 'h2' | 'pill' | 'divider'
+
+function applyWriterAction(
+  textarea: HTMLTextAreaElement,
+  value: string,
+  action: WriterAction,
+) {
+  const start = textarea.selectionStart ?? value.length
+  const end = textarea.selectionEnd ?? value.length
+  const selectedText = value.slice(start, end)
+  const before = value.slice(0, start)
+  const after = value.slice(end)
+  const selection = selectedText || getWriterPlaceholder(action)
+
+  let inserted = selection
+  let nextCursorStart = start
+  let nextCursorEnd = start + selection.length
+
+  switch (action) {
+    case 'bold':
+      inserted = `**${selection}**`
+      nextCursorStart = start + 2
+      nextCursorEnd = nextCursorStart + selection.length
+      break
+    case 'italic':
+      inserted = `*${selection}*`
+      nextCursorStart = start + 1
+      nextCursorEnd = nextCursorStart + selection.length
+      break
+    case 'strike':
+      inserted = `~~${selection}~~`
+      nextCursorStart = start + 2
+      nextCursorEnd = nextCursorStart + selection.length
+      break
+    case 'h1':
+      inserted = `# ${selection}`
+      nextCursorStart = start + 2
+      nextCursorEnd = nextCursorStart + selection.length
+      break
+    case 'h2':
+      inserted = `## ${selection}`
+      nextCursorStart = start + 3
+      nextCursorEnd = nextCursorStart + selection.length
+      break
+    case 'pill':
+      inserted = `[[pill:${selection}]]`
+      nextCursorStart = start + 7
+      nextCursorEnd = nextCursorStart + selection.length
+      break
+    case 'divider':
+      inserted = `${before && !before.endsWith('\n') ? '\n' : ''}---${after.startsWith('\n') ? '' : '\n'}`
+      nextCursorStart = start + inserted.length
+      nextCursorEnd = nextCursorStart
+      break
+  }
+
+  const nextValue = `${before}${inserted}${after}`
+
+  requestAnimationFrame(() => {
+    textarea.focus()
+    textarea.setSelectionRange(nextCursorStart, nextCursorEnd)
+  })
+
+  return nextValue
+}
+
+function getWriterPlaceholder(action: WriterAction) {
+  switch (action) {
+    case 'bold':
+      return 'fetter Text'
+    case 'italic':
+      return 'kursiver Text'
+    case 'strike':
+      return 'durchgestrichen'
+    case 'h1':
+      return 'Große Überschrift'
+    case 'h2':
+      return 'Kleine Überschrift'
+    case 'pill':
+      return 'Label'
+    case 'divider':
+      return ''
+  }
+}
+
+function handleWriterShortcut(
+  event: React.KeyboardEvent<HTMLTextAreaElement>,
+  textarea: HTMLTextAreaElement | null,
+  value: string,
+  setValue: (value: string) => void,
+) {
+  if (!textarea) return false
+  if (!(event.metaKey || event.ctrlKey) || event.altKey) return false
+
+  const key = event.key.toLowerCase()
+  let action: WriterAction | null = null
+
+  if (key === 'b') action = 'bold'
+  else if (key === 'i') action = 'italic'
+  else if (key === 'd') action = 'divider'
+  else if (key === '1') action = 'h1'
+  else if (key === '2') action = 'h2'
+  else if (key === '7' && event.shiftKey) action = 'strike'
+
+  if (!action) return false
+
+  event.preventDefault()
+  setValue(applyWriterAction(textarea, value, action))
+  return true
+}
+
+function WriterToolbar({
+  compact,
+  mobile,
+  onAction,
+}: {
+  compact: boolean
+  mobile: boolean
+  onAction: (action: WriterAction) => void
+}) {
+  const actions: Array<{ action: WriterAction; label: string; title: string; style?: React.CSSProperties }> = [
+    { action: 'bold', label: 'B', title: 'Fett', style: { fontWeight: 700 } },
+    { action: 'italic', label: 'I', title: 'Kursiv', style: { fontStyle: 'italic' } },
+    { action: 'strike', label: 'S', title: 'Durchgestrichen', style: { textDecoration: 'line-through' } },
+    { action: 'h1', label: 'H1', title: 'Große Überschrift' },
+    { action: 'h2', label: 'H2', title: 'Kleine Überschrift' },
+    { action: 'pill', label: 'Pill', title: 'Pill / Badge' },
+    { action: 'divider', label: '---', title: 'Trennlinie' },
+  ]
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 'var(--space-2)',
+        marginBottom: 'var(--space-4)',
+        paddingBottom: 'var(--space-4)',
+        borderBottom: '1px solid var(--color-border)',
+        alignItems: 'stretch',
+      }}
+    >
+      {actions.map((item) => (
+        <button
+          key={item.action}
+          type="button"
+          onClick={() => onAction(item.action)}
+          title={item.title}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flex: mobile ? '1 1 calc(50% - var(--space-2))' : '0 0 auto',
+            minWidth: mobile ? 0 : compact ? 36 : item.action === 'pill' ? 52 : 40,
+            height: 32,
+            padding: compact ? '0 var(--space-2)' : '0 var(--space-3)',
+            borderRadius: 'var(--radius-full)',
+            border: '1px solid var(--color-border)',
+            backgroundColor: 'var(--color-surface)',
+            color: 'var(--color-text)',
+            fontSize: item.action === 'pill' ? 11 : 13,
+            fontWeight: 600,
+            fontFamily: 'var(--font-ui)',
+            cursor: 'pointer',
+            boxShadow: 'var(--shadow-sm)',
+            ...item.style,
+          }}
+        >
+          {item.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function WriterRichTextPreview({ text, compact }: { text: string; compact: boolean }) {
+  const lines = text.split('\n')
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+      {lines.map((line, index) => {
+        const trimmed = line.trim()
+
+        if (!trimmed) {
+          return <div key={`spacer-${index}`} style={{ height: 'var(--space-1)' }} />
+        }
+
+        if (trimmed === '---') {
+          return (
+            <div
+              key={`divider-${index}`}
+              style={{
+                width: '100%',
+                height: 1,
+                backgroundColor: 'var(--color-border)',
+                margin: 'var(--space-2) 0',
+              }}
+            />
+          )
+        }
+
+        if (trimmed.startsWith('## ')) {
+          return (
+            <h4
+              key={`h2-${index}`}
+              style={{
+                margin: 0,
+                fontSize: 16,
+                lineHeight: 1.4,
+                fontWeight: 600,
+                color: 'var(--color-text)',
+                fontFamily: 'var(--font-ui)',
+              }}
+            >
+              {renderInlineWriterTokens(trimmed.slice(3))}
+            </h4>
+          )
+        }
+
+        if (trimmed.startsWith('# ')) {
+          return (
+            <h3
+              key={`h1-${index}`}
+              style={{
+                margin: 0,
+                fontSize: 20,
+                lineHeight: 1.35,
+                fontWeight: 600,
+                color: 'var(--color-text)',
+                fontFamily: 'var(--font-ui)',
+              }}
+            >
+              {renderInlineWriterTokens(trimmed.slice(2))}
+            </h3>
+          )
+        }
+
+        return (
+          <p
+            key={`p-${index}`}
+            style={{
+              margin: 0,
+              maxWidth: compact ? '100%' : '65ch',
+              fontSize: 15,
+              lineHeight: 1.8,
+              color: 'var(--color-text)',
+              whiteSpace: 'pre-wrap',
+              fontFamily: 'var(--font-ui)',
+            }}
+          >
+            {renderInlineWriterTokens(line)}
+          </p>
+        )
+      })}
+    </div>
+  )
+}
+
+function renderInlineWriterTokens(input: string) {
+  const tokenRegex = /(\[\[pill:(.+?)\]\]|\*\*(.+?)\*\*|\*(.+?)\*|~~(.+?)~~)/g
+  const nodes: React.ReactNode[] = []
+  let lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = tokenRegex.exec(input)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(input.slice(lastIndex, match.index))
+    }
+
+    if (match[2]) {
+      nodes.push(
+        <span
+          key={`pill-${match.index}`}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '2px 8px',
+            borderRadius: 'var(--radius-full)',
+            backgroundColor: 'var(--color-primary-light)',
+            color: 'var(--color-primary)',
+            fontSize: 11,
+            fontWeight: 600,
+            lineHeight: 1.4,
+            fontFamily: 'var(--font-ui)',
+            verticalAlign: 'middle',
+          }}
+        >
+          {match[2]}
+        </span>,
+      )
+    } else if (match[3]) {
+      nodes.push(<strong key={`bold-${match.index}`}>{match[3]}</strong>)
+    } else if (match[4]) {
+      nodes.push(<em key={`italic-${match.index}`}>{match[4]}</em>)
+    } else if (match[5]) {
+      nodes.push(<span key={`strike-${match.index}`} style={{ textDecoration: 'line-through' }}>{match[5]}</span>)
+    }
+
+    lastIndex = tokenRegex.lastIndex
+  }
+
+  if (lastIndex < input.length) {
+    nodes.push(input.slice(lastIndex))
+  }
+
+  return nodes
 }
 
 const metaLabelStyle: React.CSSProperties = {

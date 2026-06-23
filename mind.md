@@ -1099,3 +1099,43 @@ Build: ✓ 0 TypeScript-Fehler
 - Ursache war ein unbeabsichtigtes Re-Initialisieren des Draft-State im `EntityModal`, wenn sich abhängige Daten im Hintergrund aktualisiert haben.
 - Fix: Das Modal initialisiert den Draft jetzt nur noch beim echten Öffnen des Dialogs statt bei späteren Hintergrund-Updates.
 - Sichtbare App-Version auf **1.02** erhöht.
+
+## Update 2026-06-24 - Version 1.03 - Writer-Textarea ohne rechte Begrenzung
+
+- Im Abschnitt-/Writer-Bereich gab es eine unsichtbare rechte Begrenzung bei der Texteingabe.
+- Ursache war eine verbliebene `maxWidth: '65ch'` direkt auf den großen Writer-Textareas für Bearbeiten und Anlegen.
+- Fix: Die Breitenbegrenzung wurde dort entfernt, damit die Eingabe den gesamten verfügbaren Editor-Bereich nutzt.
+- Sichtbare App-Version auf **1.03** erhöht.
+
+## Update 2026-06-24 - Version 1.04 - Writer-Toolbar für Abschnitte
+
+- Der Abschnitt-/Writer-Bereich hat jetzt eine leichte Writing-Toolbar direkt über dem Textfeld.
+- Unterstützt werden jetzt Fett, Kursiv, Durchgestrichen, große/kleine Überschriften, Pills und Trennlinien.
+- Technisch bleibt der Editor bewusst leichtgewichtig: geschrieben wird weiter in einer stabilen Textarea, gespeichert als Textsyntax und direkt rich im Abschnitt gerendert.
+- Dadurch fühlt sich der Bereich deutlich mehr wie ein echtes Schreibtool an, ohne die bestehende Datenstruktur für Abschnitte aufzubrechen.
+- Sichtbare App-Version auf **1.04** erhöht.
+
+## Update 2026-06-24 - Version 1.05 - Writer responsive für Tablet & Mobile
+
+- Der neue Writer-Bereich wurde gezielt für Tablet und Mobile nachoptimiert.
+- Toolbar-Buttons umbrechen auf kleinen Screens jetzt sauber in gut tappbare Reihen statt eng zu werden.
+- Footer-Actions im Writer stapeln sich mobil auf volle Breite, damit Speichern/Abbrechen leichter bedienbar bleibt.
+- Textarea-Höhen und Schriftgrößen skalieren auf kleineren Geräten angenehmer, ohne zu viel vertikalen Platz zu verschwenden.
+- Die Rich-Preview nutzt auf kompakten Layouts keine harte Lesespalten-Begrenzung mehr und passt sich der verfügbaren Breite besser an.
+- Sichtbare App-Version auf **1.05** erhöht.
+
+## Update 2026-06-24 - Version 1.06 - Writer Shortcuts für Tastatur
+
+- Der Writer unterstützt jetzt direkte Tastatur-Shortcuts für schnelles Formatieren.
+- Aktuell eingebaut: `Ctrl/Cmd + B` für Fett, `Ctrl/Cmd + I` für Kursiv, `Ctrl/Cmd + D` für Trennlinie, `Ctrl/Cmd + 1` für H1 und `Ctrl/Cmd + 2` für H2.
+- Durchgestrichen ist ebenfalls per Tastatur möglich über `Ctrl/Cmd + Shift + 7`.
+- Die Shortcuts funktionieren sowohl beim Bearbeiten bestehender Abschnitte als auch beim Anlegen neuer Abschnitte.
+- Sichtbare App-Version auf **1.06** erhöht.
+
+## Update 2026-06-24 - Version 1.07 - Writer Heading-Hierarchie korrigiert
+
+- Die In-Text-Überschriften im Writer wurden visuell unter den eigentlichen Abschnittstitel eingeordnet.
+- `H1` rendert jetzt kleiner als zuvor und wirkt innerhalb des Abschnitts wie eine starke Zwischenüberschrift statt wie ein übergeordneter Titel.
+- `H2` wurde entsprechend ebenfalls eine Stufe kleiner gesetzt, damit die Hierarchie klar und ruhig bleibt.
+- Ziel war, dass der Abschnittstitel immer die höchste Ebene der Card bleibt.
+- Sichtbare App-Version auf **1.07** erhöht.
