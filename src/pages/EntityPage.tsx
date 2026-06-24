@@ -3915,24 +3915,28 @@ function CategoryFieldTab({
   const isMobileWriter = fieldTabWidth < 640
   const editingEditorRef = useRef<HTMLDivElement | null>(null)
   const addEditorRef = useRef<HTMLDivElement | null>(null)
+  const editingTextRef = useRef(editingText)
+  const addTextRef = useRef(addText)
 
   useEffect(() => { setLocalText(fieldValue) }, [fieldValue])
+  useEffect(() => { editingTextRef.current = editingText }, [editingText])
+  useEffect(() => { addTextRef.current = addText }, [addText])
 
   useEffect(() => {
     if (editingIndex === null || !editingEditorRef.current) return
-    const nextHtml = getWriterEditorHtml(editingText)
+    const nextHtml = getWriterEditorHtml(editingTextRef.current)
     if (editingEditorRef.current.innerHTML !== nextHtml) {
       editingEditorRef.current.innerHTML = nextHtml
     }
-  }, [editingIndex, editingText])
+  }, [editingIndex])
 
   useEffect(() => {
     if (!isAdding || !addEditorRef.current) return
-    const nextHtml = getWriterEditorHtml(addText)
+    const nextHtml = getWriterEditorHtml(addTextRef.current)
     if (addEditorRef.current.innerHTML !== nextHtml) {
       addEditorRef.current.innerHTML = nextHtml
     }
-  }, [isAdding, addText])
+  }, [isAdding])
 
   if (!field) return null
 
@@ -4239,6 +4243,7 @@ function CategoryFieldTab({
                       data-placeholder="Beginne zu schreiben … Dialoge, Szenenbeschreibungen, Lore, Buchkapitel oder Game-Texte finden hier ihren Platz."
                       onKeyDown={(e) => {
                         if (handleWriterShortcut(e, editingEditorRef.current, setEditingText)) return
+                        if (handleWriterStructuralKeys(e, editingEditorRef.current, setEditingText)) return
                         if (e.key === 'Escape') setEditingIndex(null)
                       }}
                       onInput={(e) => setEditingText(sanitizeWriterHtml((e.currentTarget as HTMLDivElement).innerHTML))}
@@ -4351,6 +4356,7 @@ function CategoryFieldTab({
                   data-placeholder="Beginne zu schreiben … Dialoge, Szenenbeschreibungen, Lore, Buchkapitel oder Game-Texte finden hier ihren Platz."
                   onKeyDown={(e) => {
                     if (handleWriterShortcut(e, addEditorRef.current, setAddText)) return
+                    if (handleWriterStructuralKeys(e, addEditorRef.current, setAddText)) return
                     if (e.key === 'Escape') { setIsAdding(false); setAddText(''); setAddSectionTitle(''); setAddSectionLabel('Kapitel') }
                   }}
                   onInput={(e) => setAddText(sanitizeWriterHtml((e.currentTarget as HTMLDivElement).innerHTML))}
@@ -4807,6 +4813,30 @@ function handleWriterShortcut(
   return true
 }
 
+function handleWriterStructuralKeys(
+  event: React.KeyboardEvent<HTMLDivElement>,
+  editor: HTMLDivElement | null,
+  setValue: (value: string) => void,
+) {
+  if (!editor) return false
+  if (event.key !== 'Enter' || event.shiftKey) return false
+
+  const selection = window.getSelection()
+  const anchorNode = selection?.anchorNode
+  if (!anchorNode) return false
+  const anchorElement = anchorNode instanceof Element ? anchorNode : anchorNode.parentElement
+  const dialogueRoot = anchorElement?.closest?.('[data-role="dialogue"]') as HTMLDivElement | null
+  if (!dialogueRoot) return false
+
+  event.preventDefault()
+  const paragraph = document.createElement('p')
+  paragraph.innerHTML = '<br>'
+  dialogueRoot.insertAdjacentElement('afterend', paragraph)
+  placeCaretAtStart(paragraph)
+  setValue(sanitizeWriterHtml(editor.innerHTML))
+  return true
+}
+
 function WriterToolbar({
   compact,
   mobile,
@@ -4880,17 +4910,38 @@ function applyWriterCommand(editor: HTMLDivElement, action: WriterAction) {
   else if (action === 'h1') document.execCommand('formatBlock', false, 'h3')
   else if (action === 'h2') document.execCommand('formatBlock', false, 'h4')
   else if (action === 'pill') insertWriterHtml(editor, '<span data-role="pill">Label</span>&nbsp;')
-  else if (action === 'dialogue') insertWriterHtml(editor, createDialogueHtml('Charakter', 'Gesprochener Dialog'))
+  else if (action === 'dialogue') insertWriterHtml(editor, createDialogueHtml('Charakter', 'Gesprochener Dialog', true))
   else if (action === 'divider') insertWriterHtml(editor, '<hr />')
 }
 
 function insertWriterHtml(editor: HTMLDivElement, html: string) {
   editor.focus()
   document.execCommand('insertHTML', false, html)
+  moveCaretToWriterMarker(editor)
 }
 
-function createDialogueHtml(speaker: string, speech: string) {
-  return `<div data-role="dialogue"><div data-role="speaker">${escapeHtml(speaker)}</div><p>„${escapeHtml(speech)}“</p></div><p><br></p>`
+function createDialogueHtml(speaker: string, speech: string, withTrailingCursor = false) {
+  const trailingParagraph = withTrailingCursor
+    ? '<p><span data-role="cursor-marker">\u200b</span><br></p>'
+    : '<p><br></p>'
+  return `<div data-role="dialogue"><div data-role="speaker">${escapeHtml(speaker)}</div><p>„${escapeHtml(speech)}“</p></div>${trailingParagraph}`
+}
+
+function moveCaretToWriterMarker(editor: HTMLDivElement) {
+  const marker = editor.querySelector('[data-role="cursor-marker"]')
+  if (!marker) return
+  placeCaretAtStart(marker)
+  marker.parentNode?.removeChild(marker)
+}
+
+function placeCaretAtStart(node: Node) {
+  const selection = window.getSelection()
+  if (!selection) return
+  const range = document.createRange()
+  range.setStart(node, 0)
+  range.collapse(true)
+  selection.removeAllRanges()
+  selection.addRange(range)
 }
 
 function getWriterPlainText(value: string) {
