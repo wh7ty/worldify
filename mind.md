@@ -1139,3 +1139,34 @@ Build: ✓ 0 TypeScript-Fehler
 - `H2` wurde entsprechend ebenfalls eine Stufe kleiner gesetzt, damit die Hierarchie klar und ruhig bleibt.
 - Ziel war, dass der Abschnittstitel immer die höchste Ebene der Card bleibt.
 - Sichtbare App-Version auf **1.07** erhöht.
+
+## Update 2026-06-24 - Version 1.08 - Writer-Dialoge für Charaktere
+
+- Der Writer unterstützt jetzt eigene Dialog-Blöcke für gesprochene Charakterzeilen.
+- Neue Syntax: `[[say:Charakter|Gesprochener Text]]`
+- Im Preview wird das als eigener Dialog-Container mit Sprechername und hervorgehobener Sprechzeile gerendert.
+- Die Funktion ist responsive aufgebaut und bleibt auf Tablet und Mobile gut lesbar.
+- Sichtbare App-Version auf **1.08** erhöht.
+
+## Update 2026-06-24 - Version 1.09 - Live-Preview und einfacher Dialog-Flow im Writer
+
+- Der Writer hat jetzt eine echte Live-Preview direkt im Editor, damit Fett, Überschriften, Pills, Trennlinien und Dialoge sofort sichtbar werden.
+- Zusätzlich gibt es einen kleinen Dialog-Einfüger mit Sprecher + Text, damit Dialog-Blöcke nicht mehr händisch als Syntax geschrieben werden müssen.
+- Dialog-Syntax wird im Preview jetzt robuster behandelt und auch dann sauber als eigener Block gerendert, wenn sie vorher mitten im Text stand.
+- Ziel war, den Writer spürbar weniger technisch und deutlich näher an ein echtes Schreibtool zu bringen.
+- Sichtbare App-Version auf **1.09** erhöht.
+
+## Update 2026-06-24 - Version 1.10 - Direkter Live-Writer statt Preview
+
+- Der Abschnitts-Writer wurde von Textarea + separater Preview auf einen direkten Live-Editor umgestellt.
+- Formatierungen erscheinen jetzt direkt in der eigentlichen Schreibfläche während des Tippens.
+- Dialoge, Pills, Überschriften und Trennlinien werden direkt inline dargestellt statt erst in einer separaten Vorschau.
+- Die alte Syntax wird beim Öffnen bestehender Inhalte weiterhin sauber in die neue Live-Darstellung überführt.
+- Sichtbare App-Version auf **1.10** erhöht.
+
+## Update 2026-06-24 - Version 1.11 - Dialog-Schnellblock ausgeblendet
+
+- Der zusätzliche Block "Dialog schnell einfügen" im Writer wurde wieder entfernt.
+- Der Editor bleibt dadurch ruhiger und fokussierter auf die eigentliche Schreibfläche.
+- Dialoge können weiterhin direkt über die Toolbar eingefügt werden, ohne dass das extra Panel sichtbar bleibt.
+- Sichtbare App-Version auf **1.11** erhöht.

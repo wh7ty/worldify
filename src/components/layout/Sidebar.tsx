@@ -31,7 +31,7 @@ import { supabase } from '../../lib/supabase'
 import { getCategoryIcon } from '../../lib/categoryIcons'
 import { useWorldStore } from '../../store/useWorldStore'
 
-const APP_VERSION = '1.07'
+const APP_VERSION = '1.11'
 
 export default function Sidebar({
   isMobile = false,

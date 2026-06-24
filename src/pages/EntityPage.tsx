@@ -3913,10 +3913,26 @@ function CategoryFieldTab({
   const fieldTabWidth = useWindowWidth()
   const isCompactWriter = fieldTabWidth < 768
   const isMobileWriter = fieldTabWidth < 640
-  const editingTextareaRef = useRef<HTMLTextAreaElement | null>(null)
-  const addTextareaRef = useRef<HTMLTextAreaElement | null>(null)
+  const editingEditorRef = useRef<HTMLDivElement | null>(null)
+  const addEditorRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => { setLocalText(fieldValue) }, [fieldValue])
+
+  useEffect(() => {
+    if (editingIndex === null || !editingEditorRef.current) return
+    const nextHtml = getWriterEditorHtml(editingText)
+    if (editingEditorRef.current.innerHTML !== nextHtml) {
+      editingEditorRef.current.innerHTML = nextHtml
+    }
+  }, [editingIndex, editingText])
+
+  useEffect(() => {
+    if (!isAdding || !addEditorRef.current) return
+    const nextHtml = getWriterEditorHtml(addText)
+    if (addEditorRef.current.innerHTML !== nextHtml) {
+      addEditorRef.current.innerHTML = nextHtml
+    }
+  }, [isAdding, addText])
 
   if (!field) return null
 
@@ -4210,26 +4226,28 @@ function CategoryFieldTab({
                       compact={isCompactWriter}
                       mobile={isMobileWriter}
                       onAction={(action) => {
-                        if (!editingTextareaRef.current) return
-                        setEditingText(applyWriterAction(editingTextareaRef.current, editingText, action))
+                        if (!editingEditorRef.current) return
+                        applyWriterCommand(editingEditorRef.current, action)
+                        setEditingText(sanitizeWriterHtml(editingEditorRef.current.innerHTML))
                       }}
                     />
-                    <textarea
-                      ref={editingTextareaRef}
-                      value={editingText}
-                      onChange={(e) => setEditingText(e.target.value)}
+                    <div
+                      ref={editingEditorRef}
+                      contentEditable
+                      suppressContentEditableWarning
+                      className="writer-surface worldify-thin-scrollbar"
+                      data-placeholder="Beginne zu schreiben … Dialoge, Szenenbeschreibungen, Lore, Buchkapitel oder Game-Texte finden hier ihren Platz."
                       onKeyDown={(e) => {
-                        if (handleWriterShortcut(e, editingTextareaRef.current, editingText, setEditingText)) return
+                        if (handleWriterShortcut(e, editingEditorRef.current, setEditingText)) return
                         if (e.key === 'Escape') setEditingIndex(null)
                       }}
-                      placeholder={'Beginne zu schreiben …\n\nDialoge, Szenenbeschreibungen, Lore, Buchkapitel oder Game-Texte finden hier ihren Platz.'}
-                      rows={14}
-                      style={{ width: '100%', border: 'none', outline: 'none', resize: 'vertical', fontSize: isMobileWriter ? 15 : 16, fontFamily: 'var(--font-ui)', color: 'var(--color-text)', lineHeight: 1.8, backgroundColor: 'transparent', minHeight: isMobileWriter ? 240 : isCompactWriter ? 300 : 360, boxSizing: 'border-box' }}
+                      onInput={(e) => setEditingText(sanitizeWriterHtml((e.currentTarget as HTMLDivElement).innerHTML))}
+                      style={{ width: '100%', outline: 'none', overflowY: 'auto', fontSize: isMobileWriter ? 15 : 16, fontFamily: 'var(--font-ui)', color: 'var(--color-text)', lineHeight: 1.8, backgroundColor: 'transparent', minHeight: isMobileWriter ? 240 : isCompactWriter ? 300 : 360, boxSizing: 'border-box' }}
                     />
                   </div>
                   <div style={{ display: 'flex', flexDirection: isMobileWriter ? 'column' : 'row', alignItems: isMobileWriter ? 'stretch' : 'center', justifyContent: 'space-between', gap: 'var(--space-3)', padding: isMobileWriter ? 'var(--space-4)' : 'var(--space-3) var(--space-6)', borderTop: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
                     <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-ui)' }}>
-                      {editingText.trim() ? editingText.trim().split(/\s+/).length : 0} Wörter · {editingText.length} Zeichen
+                      {getWriterPlainText(editingText).trim() ? getWriterPlainText(editingText).trim().split(/\s+/).length : 0} Wörter · {getWriterPlainText(editingText).length} Zeichen
                     </span>
                     <div style={{ display: 'flex', flexDirection: isMobileWriter ? 'column' : 'row', justifyContent: 'flex-end', gap: 'var(--space-2)', width: isMobileWriter ? '100%' : 'auto' }}>
                     <button
@@ -4279,7 +4297,7 @@ function CategoryFieldTab({
                   <div style={{ padding: isMobileWriter ? 'var(--space-4)' : 'var(--space-6)' }}>
                     {section.body ? (
                       <div style={{ margin: 0, fontSize: 15, color: 'var(--color-text)', lineHeight: 1.8, overflowWrap: 'anywhere', fontFamily: 'var(--font-ui)' }}>
-                        <WriterRichTextPreview text={section.body} compact={isCompactWriter} />
+                        <WriterRenderedContent text={section.body} compact={isCompactWriter} />
                       </div>
                     ) : (
                       <p style={{ margin: 0, fontSize: 13, color: 'var(--color-text-placeholder)', lineHeight: 1.7, fontStyle: 'italic', fontFamily: 'var(--font-ui)' }}>Noch kein Text — öffne den Abschnitt zum Schreiben.</p>
@@ -4320,26 +4338,28 @@ function CategoryFieldTab({
                   compact={isCompactWriter}
                   mobile={isMobileWriter}
                   onAction={(action) => {
-                    if (!addTextareaRef.current) return
-                    setAddText(applyWriterAction(addTextareaRef.current, addText, action))
+                    if (!addEditorRef.current) return
+                    applyWriterCommand(addEditorRef.current, action)
+                    setAddText(sanitizeWriterHtml(addEditorRef.current.innerHTML))
                   }}
                 />
-                <textarea
-                  ref={addTextareaRef}
-                  value={addText}
-                  onChange={(e) => setAddText(e.target.value)}
+                <div
+                  ref={addEditorRef}
+                  contentEditable
+                  suppressContentEditableWarning
+                  className="writer-surface worldify-thin-scrollbar"
+                  data-placeholder="Beginne zu schreiben … Dialoge, Szenenbeschreibungen, Lore, Buchkapitel oder Game-Texte finden hier ihren Platz."
                   onKeyDown={(e) => {
-                    if (handleWriterShortcut(e, addTextareaRef.current, addText, setAddText)) return
+                    if (handleWriterShortcut(e, addEditorRef.current, setAddText)) return
                     if (e.key === 'Escape') { setIsAdding(false); setAddText(''); setAddSectionTitle(''); setAddSectionLabel('Kapitel') }
                   }}
-                  placeholder={'Beginne zu schreiben …\n\nDialoge, Szenenbeschreibungen, Lore, Buchkapitel oder Game-Texte finden hier ihren Platz.'}
-                  rows={14}
-                  style={{ width: '100%', border: 'none', outline: 'none', resize: 'vertical', fontSize: isMobileWriter ? 15 : 16, fontFamily: 'var(--font-ui)', color: 'var(--color-text)', lineHeight: 1.8, backgroundColor: 'transparent', minHeight: isMobileWriter ? 240 : isCompactWriter ? 300 : 360, boxSizing: 'border-box' }}
+                  onInput={(e) => setAddText(sanitizeWriterHtml((e.currentTarget as HTMLDivElement).innerHTML))}
+                  style={{ width: '100%', outline: 'none', overflowY: 'auto', fontSize: isMobileWriter ? 15 : 16, fontFamily: 'var(--font-ui)', color: 'var(--color-text)', lineHeight: 1.8, backgroundColor: 'transparent', minHeight: isMobileWriter ? 240 : isCompactWriter ? 300 : 360, boxSizing: 'border-box' }}
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: isMobileWriter ? 'column' : 'row', alignItems: isMobileWriter ? 'stretch' : 'center', justifyContent: 'space-between', gap: 'var(--space-3)', padding: isMobileWriter ? 'var(--space-4)' : 'var(--space-3) var(--space-6)', borderTop: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg)' }}>
                 <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-ui)' }}>
-                  {addText.trim() ? addText.trim().split(/\s+/).length : 0} Wörter · {addText.length} Zeichen
+                  {getWriterPlainText(addText).trim() ? getWriterPlainText(addText).trim().split(/\s+/).length : 0} Wörter · {getWriterPlainText(addText).length} Zeichen
                 </span>
                 <div style={{ display: 'flex', flexDirection: isMobileWriter ? 'column' : 'row', justifyContent: 'flex-end', gap: 'var(--space-2)', width: isMobileWriter ? '100%' : 'auto' }}>
                   <button onClick={() => { setIsAdding(false); setAddText(''); setAddSectionTitle(''); setAddSectionLabel('Kapitel') }} style={{ ...cfBtn, width: isMobileWriter ? '100%' : 'auto', padding: '0 var(--space-3)', gap: 'var(--space-1)', fontSize: 13 }}>
@@ -4759,98 +4779,14 @@ function toSingular(label: string) {
   return label.endsWith('s') ? label.slice(0, -1) : label
 }
 
-type WriterAction = 'bold' | 'italic' | 'strike' | 'h1' | 'h2' | 'pill' | 'divider'
-
-function applyWriterAction(
-  textarea: HTMLTextAreaElement,
-  value: string,
-  action: WriterAction,
-) {
-  const start = textarea.selectionStart ?? value.length
-  const end = textarea.selectionEnd ?? value.length
-  const selectedText = value.slice(start, end)
-  const before = value.slice(0, start)
-  const after = value.slice(end)
-  const selection = selectedText || getWriterPlaceholder(action)
-
-  let inserted = selection
-  let nextCursorStart = start
-  let nextCursorEnd = start + selection.length
-
-  switch (action) {
-    case 'bold':
-      inserted = `**${selection}**`
-      nextCursorStart = start + 2
-      nextCursorEnd = nextCursorStart + selection.length
-      break
-    case 'italic':
-      inserted = `*${selection}*`
-      nextCursorStart = start + 1
-      nextCursorEnd = nextCursorStart + selection.length
-      break
-    case 'strike':
-      inserted = `~~${selection}~~`
-      nextCursorStart = start + 2
-      nextCursorEnd = nextCursorStart + selection.length
-      break
-    case 'h1':
-      inserted = `# ${selection}`
-      nextCursorStart = start + 2
-      nextCursorEnd = nextCursorStart + selection.length
-      break
-    case 'h2':
-      inserted = `## ${selection}`
-      nextCursorStart = start + 3
-      nextCursorEnd = nextCursorStart + selection.length
-      break
-    case 'pill':
-      inserted = `[[pill:${selection}]]`
-      nextCursorStart = start + 7
-      nextCursorEnd = nextCursorStart + selection.length
-      break
-    case 'divider':
-      inserted = `${before && !before.endsWith('\n') ? '\n' : ''}---${after.startsWith('\n') ? '' : '\n'}`
-      nextCursorStart = start + inserted.length
-      nextCursorEnd = nextCursorStart
-      break
-  }
-
-  const nextValue = `${before}${inserted}${after}`
-
-  requestAnimationFrame(() => {
-    textarea.focus()
-    textarea.setSelectionRange(nextCursorStart, nextCursorEnd)
-  })
-
-  return nextValue
-}
-
-function getWriterPlaceholder(action: WriterAction) {
-  switch (action) {
-    case 'bold':
-      return 'fetter Text'
-    case 'italic':
-      return 'kursiver Text'
-    case 'strike':
-      return 'durchgestrichen'
-    case 'h1':
-      return 'Große Überschrift'
-    case 'h2':
-      return 'Kleine Überschrift'
-    case 'pill':
-      return 'Label'
-    case 'divider':
-      return ''
-  }
-}
+type WriterAction = 'bold' | 'italic' | 'strike' | 'h1' | 'h2' | 'pill' | 'dialogue' | 'divider'
 
 function handleWriterShortcut(
-  event: React.KeyboardEvent<HTMLTextAreaElement>,
-  textarea: HTMLTextAreaElement | null,
-  value: string,
+  event: React.KeyboardEvent<HTMLDivElement>,
+  editor: HTMLDivElement | null,
   setValue: (value: string) => void,
 ) {
-  if (!textarea) return false
+  if (!editor) return false
   if (!(event.metaKey || event.ctrlKey) || event.altKey) return false
 
   const key = event.key.toLowerCase()
@@ -4866,7 +4802,8 @@ function handleWriterShortcut(
   if (!action) return false
 
   event.preventDefault()
-  setValue(applyWriterAction(textarea, value, action))
+  applyWriterCommand(editor, action)
+  setValue(sanitizeWriterHtml(editor.innerHTML))
   return true
 }
 
@@ -4886,6 +4823,7 @@ function WriterToolbar({
     { action: 'h1', label: 'H1', title: 'Große Überschrift' },
     { action: 'h2', label: 'H2', title: 'Kleine Überschrift' },
     { action: 'pill', label: 'Pill', title: 'Pill / Badge' },
+    { action: 'dialogue', label: 'Dialog', title: 'Charakterdialog' },
     { action: 'divider', label: '---', title: 'Trennlinie' },
   ]
 
@@ -4934,138 +4872,114 @@ function WriterToolbar({
   )
 }
 
-function WriterRichTextPreview({ text, compact }: { text: string; compact: boolean }) {
-  const lines = text.split('\n')
+function applyWriterCommand(editor: HTMLDivElement, action: WriterAction) {
+  editor.focus()
+  if (action === 'bold') document.execCommand('bold')
+  else if (action === 'italic') document.execCommand('italic')
+  else if (action === 'strike') document.execCommand('strikeThrough')
+  else if (action === 'h1') document.execCommand('formatBlock', false, 'h3')
+  else if (action === 'h2') document.execCommand('formatBlock', false, 'h4')
+  else if (action === 'pill') insertWriterHtml(editor, '<span data-role="pill">Label</span>&nbsp;')
+  else if (action === 'dialogue') insertWriterHtml(editor, createDialogueHtml('Charakter', 'Gesprochener Dialog'))
+  else if (action === 'divider') insertWriterHtml(editor, '<hr />')
+}
 
+function insertWriterHtml(editor: HTMLDivElement, html: string) {
+  editor.focus()
+  document.execCommand('insertHTML', false, html)
+}
+
+function createDialogueHtml(speaker: string, speech: string) {
+  return `<div data-role="dialogue"><div data-role="speaker">${escapeHtml(speaker)}</div><p>„${escapeHtml(speech)}“</p></div><p><br></p>`
+}
+
+function getWriterPlainText(value: string) {
+  if (!value.trim()) return ''
+  const temp = typeof document !== 'undefined' ? document.createElement('div') : null
+  if (!temp) return value.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+  temp.innerHTML = getWriterEditorHtml(value)
+  return (temp.textContent ?? '').replace(/\s+/g, ' ').trim()
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+function sanitizeWriterHtml(html: string) {
+  if (typeof document === 'undefined') return html
+  const parser = new DOMParser()
+  const parsed = parser.parseFromString(`<div>${html}</div>`, 'text/html')
+  const root = parsed.body.firstElementChild as HTMLDivElement | null
+  if (!root) return ''
+  const allowedTags = new Set(['DIV', 'P', 'H3', 'H4', 'STRONG', 'EM', 'S', 'HR', 'SPAN', 'BR'])
+
+  const walk = (node: Element) => {
+    Array.from(node.children).forEach((child) => {
+      if (!allowedTags.has(child.tagName)) {
+        child.replaceWith(...Array.from(child.childNodes))
+        return
+      }
+      Array.from(child.attributes).forEach((attribute) => {
+        if (attribute.name === 'data-role') return
+        if (attribute.name.startsWith('on')) {
+          child.removeAttribute(attribute.name)
+          return
+        }
+        child.removeAttribute(attribute.name)
+      })
+      walk(child)
+    })
+  }
+
+  walk(root)
+  return root.innerHTML
+}
+
+function renderLegacyInlineHtml(input: string) {
+  return escapeHtml(input)
+    .replace(/\[\[pill:(.+?)\]\]/g, '<span data-role="pill">$1</span>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/~~(.+?)~~/g, '<s>$1</s>')
+}
+
+function getWriterEditorHtml(value: string) {
+  if (!value.trim()) return ''
+  if (/<[a-z][\s\S]*>/i.test(value)) return sanitizeWriterHtml(value)
+
+  const normalizedText = value.replace(/\[\[say:([^|\]]+)\|(.+?)\]\]/g, '\n[[say:$1|$2]]\n')
+  return normalizedText
+    .split('\n')
+    .map((line) => {
+      const trimmed = line.trim()
+      if (!trimmed) return '<p><br></p>'
+      if (trimmed === '---') return '<hr />'
+      if (trimmed.startsWith('## ')) return `<h4>${renderLegacyInlineHtml(trimmed.slice(3))}</h4>`
+      if (trimmed.startsWith('# ')) return `<h3>${renderLegacyInlineHtml(trimmed.slice(2))}</h3>`
+      if (trimmed.startsWith('[[say:') && trimmed.endsWith(']]')) {
+        const content = trimmed.slice(6, -2)
+        const separatorIndex = content.indexOf('|')
+        const speaker = separatorIndex >= 0 ? content.slice(0, separatorIndex).trim() : 'Dialog'
+        const speech = separatorIndex >= 0 ? content.slice(separatorIndex + 1).trim() : content.trim()
+        return createDialogueHtml(speaker, speech)
+      }
+      return `<p>${renderLegacyInlineHtml(line)}</p>`
+    })
+    .join('')
+}
+
+function WriterRenderedContent({ text, compact }: { text: string; compact: boolean }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-      {lines.map((line, index) => {
-        const trimmed = line.trim()
-
-        if (!trimmed) {
-          return <div key={`spacer-${index}`} style={{ height: 'var(--space-1)' }} />
-        }
-
-        if (trimmed === '---') {
-          return (
-            <div
-              key={`divider-${index}`}
-              style={{
-                width: '100%',
-                height: 1,
-                backgroundColor: 'var(--color-border)',
-                margin: 'var(--space-2) 0',
-              }}
-            />
-          )
-        }
-
-        if (trimmed.startsWith('## ')) {
-          return (
-            <h4
-              key={`h2-${index}`}
-              style={{
-                margin: 0,
-                fontSize: 16,
-                lineHeight: 1.4,
-                fontWeight: 600,
-                color: 'var(--color-text)',
-                fontFamily: 'var(--font-ui)',
-              }}
-            >
-              {renderInlineWriterTokens(trimmed.slice(3))}
-            </h4>
-          )
-        }
-
-        if (trimmed.startsWith('# ')) {
-          return (
-            <h3
-              key={`h1-${index}`}
-              style={{
-                margin: 0,
-                fontSize: 20,
-                lineHeight: 1.35,
-                fontWeight: 600,
-                color: 'var(--color-text)',
-                fontFamily: 'var(--font-ui)',
-              }}
-            >
-              {renderInlineWriterTokens(trimmed.slice(2))}
-            </h3>
-          )
-        }
-
-        return (
-          <p
-            key={`p-${index}`}
-            style={{
-              margin: 0,
-              maxWidth: compact ? '100%' : '65ch',
-              fontSize: 15,
-              lineHeight: 1.8,
-              color: 'var(--color-text)',
-              whiteSpace: 'pre-wrap',
-              fontFamily: 'var(--font-ui)',
-            }}
-          >
-            {renderInlineWriterTokens(line)}
-          </p>
-        )
-      })}
-    </div>
+    <div
+      className={`writer-rendered${compact ? ' writer-rendered-compact' : ''}`}
+      dangerouslySetInnerHTML={{ __html: getWriterEditorHtml(text) }}
+    />
   )
 }
 
-function renderInlineWriterTokens(input: string) {
-  const tokenRegex = /(\[\[pill:(.+?)\]\]|\*\*(.+?)\*\*|\*(.+?)\*|~~(.+?)~~)/g
-  const nodes: React.ReactNode[] = []
-  let lastIndex = 0
-  let match: RegExpExecArray | null
-
-  while ((match = tokenRegex.exec(input)) !== null) {
-    if (match.index > lastIndex) {
-      nodes.push(input.slice(lastIndex, match.index))
-    }
-
-    if (match[2]) {
-      nodes.push(
-        <span
-          key={`pill-${match.index}`}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            padding: '2px 8px',
-            borderRadius: 'var(--radius-full)',
-            backgroundColor: 'var(--color-primary-light)',
-            color: 'var(--color-primary)',
-            fontSize: 11,
-            fontWeight: 600,
-            lineHeight: 1.4,
-            fontFamily: 'var(--font-ui)',
-            verticalAlign: 'middle',
-          }}
-        >
-          {match[2]}
-        </span>,
-      )
-    } else if (match[3]) {
-      nodes.push(<strong key={`bold-${match.index}`}>{match[3]}</strong>)
-    } else if (match[4]) {
-      nodes.push(<em key={`italic-${match.index}`}>{match[4]}</em>)
-    } else if (match[5]) {
-      nodes.push(<span key={`strike-${match.index}`} style={{ textDecoration: 'line-through' }}>{match[5]}</span>)
-    }
-
-    lastIndex = tokenRegex.lastIndex
-  }
-
-  if (lastIndex < input.length) {
-    nodes.push(input.slice(lastIndex))
-  }
-
-  return nodes
-}
 
 const metaLabelStyle: React.CSSProperties = {
   fontSize: 10,
