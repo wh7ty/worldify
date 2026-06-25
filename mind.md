@@ -1170,3 +1170,17 @@ Build: ✓ 0 TypeScript-Fehler
 - Der Editor bleibt dadurch ruhiger und fokussierter auf die eigentliche Schreibfläche.
 - Dialoge können weiterhin direkt über die Toolbar eingefügt werden, ohne dass das extra Panel sichtbar bleibt.
 - Sichtbare App-Version auf **1.11** erhöht.
+
+## Update 2026-06-24 - Version 1.12 - Rechte Begrenzung im Live-Writer weiter gelockert
+
+- Im aktiven Live-Writer gab es auf Desktop weiterhin eine unsichtbare rechte Begrenzung, besonders bei Dialogblöcken.
+- Ursache war eine verbliebene `max-width: 65ch` auf den Dialog-Containern innerhalb der eigentlichen Schreibfläche.
+- Fix: In der aktiven Writer-Fläche nutzen Dialogblöcke jetzt die volle verfügbare Breite; die ruhigere Lesebreite bleibt nur in der normalen Anzeige erhalten.
+- Sichtbare App-Version auf **1.12** erhöht.
+
+## Update 2026-06-25 - Version 1.13 - Cover/Avatar-Sync an echte Entity-Struktur angepasst
+
+- Beim Bild-Upload konnte ein Sync-Fehler wie `column entities.user_id does not exist` auftreten.
+- Ursache war ein veralteter Filter in `entityMedia.ts`, der beim Update von `entities` noch auf `user_id` geprüft hat, obwohl diese Spalte in der Entity-Struktur nicht existiert.
+- Fix: Cover- und Avatar-Sync aktualisieren die Entity jetzt nur noch über die echte `id`, genau wie andere Entity-Updates im Projekt.
+- Sichtbare App-Version auf **1.13** erhöht.

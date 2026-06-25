@@ -54,7 +54,6 @@ async function uploadEntityMedia(
     .from('entities')
     .update({ [column]: url })
     .eq('id', entityId)
-    .eq('user_id', userId)
     .select(column)
     .single()
   const confirmedUrl = (updatedEntity as Record<string, string | null> | null)?.[column] ?? null
@@ -79,7 +78,7 @@ async function uploadEntityMedia(
 
 async function removeEntityMedia(
   kind: 'cover' | 'avatar',
-  userId: string,
+  _userId: string,
   entityId: string,
 ): Promise<void> {
   const cacheKey = kind === 'cover' ? COVER_CACHE_KEY : AVATAR_CACHE_KEY
@@ -89,7 +88,6 @@ async function removeEntityMedia(
     .from('entities')
     .update({ [column]: null })
     .eq('id', entityId)
-    .eq('user_id', userId)
     .select(column)
     .single()
   const confirmedUrl = (updatedEntity as Record<string, string | null> | null)?.[column] ?? '__unexpected__'
